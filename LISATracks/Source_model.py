@@ -1,7 +1,7 @@
 from abc import ABCMeta,abstractmethod
 import scipy
 import scipy.interpolate 
-
+import numpy as np 
 class Model(object):
     """
     Base class for a source model. Sources should subclass this
@@ -56,7 +56,7 @@ class Model(object):
             freqs: array of frequencies over which to evaluate the waveform. 
         Returns:
             t_f_container: list of splines for the time-frequency map for each harmonic
-            amplitude_time_container: list of splines for the amplitude as a function of time for each harmonic
+            amplitude_time_container: list of splines for the amplitude (in characheristic strain) as a function of time for each harmonic
         """
         Amps, Phases, Time_freqs = self.Amplitudes(), self.Phases(), self.Time_frequency()
 
@@ -75,7 +75,7 @@ class Model(object):
 
             # Interpolate the function of t->f map
             t_f_spline = scipy.interpolate.CubicSpline(t_f_map,freqs[freqs>f0])
-            amplitude_time_spline = scipy.interpolate.CubicSpline(t_f_map,Amplitude)
+            amplitude_time_spline = scipy.interpolate.CubicSpline(t_f_map,2*t_f_spline(t_f_map)*np.abs(Amplitude))
 
 
             t_f_container.append(t_f_spline)

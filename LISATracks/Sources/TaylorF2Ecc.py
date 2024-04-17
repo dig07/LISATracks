@@ -280,7 +280,7 @@ class TF2Ecc(Model):
     def __init__(self,parameters,freqs,T):
         '''
         Args:
-            parameters: list of parameters for this source
+            parameters: dictionary of parameters for this source
             freqs: array of frequencies over which to evaluate the waveform (build the interpolant) over
             T: Observation time
         '''
@@ -288,7 +288,13 @@ class TF2Ecc(Model):
         self.freqs = freqs
         self.observation_time = T
 
-        self.m1,self.m2,self.e0,self.D,self.initial_orbital_phase,self.f_low = self.parameters
+        self.m1 = self.parameters['m1']
+        self.m2 = self.parameters['m2']
+        self.e0 = self.parameters['e0']
+        self.D  = self.parameters['D']
+        self.initial_orbital_phase = self.parameters['phi0']
+        self.f_low = self.parameters['f_low']
+
         f_high = freqs[-1]
         self.f0s = [self.f_low]
 

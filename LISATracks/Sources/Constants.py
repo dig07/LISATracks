@@ -9,3 +9,4 @@ pc = 3.08567758149136727e+16   # Parsec [m] (XXIX General Assembly of the Intern
 YRSID_SI = 31558149.763545600  ## siderial year [sec] (http://hpiers.obspm.fr/eop-pc/models/constants.html)
 
 MTsun = GMsun/clight**3   ## Solar mass in seconds [s] (http://asa.usno.navy.mil/static/files/2016/Astronomical_Constants_2016.pdf)
+
