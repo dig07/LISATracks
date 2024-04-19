@@ -4,6 +4,8 @@ from manim import WHITE, BLACK
 from .Sources import TaylorF2Ecc
 from functools import partial
 import copy
+from .Confusion import Add_confusion, psd_SCIRD
+
 class Tracks(Scene):
     '''
     Class for creating the final animation tracks
@@ -13,7 +15,8 @@ class Tracks(Scene):
                  y_min=1.e-21,
                  y_max=1.e-19,
                  t_min = 1.e-10,
-                 run_time=25) -> None:
+                 run_time=25,
+                 psd_color='red') -> None:
         '''
         Args:
             T_obs (float): Observation time.
@@ -34,6 +37,8 @@ class Tracks(Scene):
 
         self.y_min = y_min
         self.y_max = y_max
+
+        self.psd_color = psd_color
 
         # Master frequency array for the plot
         self.freqs = np.logspace(np.log10(self.f_low),np.log10(self.f_high),self.freq_resolution)
@@ -98,10 +103,18 @@ class Tracks(Scene):
             else:
                 assert False, "Source type not implemented"
 
-    def generate_ASD_with_confusion(self,T):
+    def ASD_with_confusion(self,freqs):
         '''
+        Calculate the ASD with confusion noise for the current mission time.
         '''
-        pass
+
+        # Given some mission time, calcute the PSD and add the bump to it 
+        psd = psd_SCIRD(freqs)
+        psd_with_confusion = Add_confusion(freqs, psd, self.mission_time_tracker.get_value())
+        # Return ASD not PSD 
+        return(np.sqrt(psd_with_confusion))
+
+
 
     def position_at_time(self,dot,spline_t_f=None,spline_t_A=None):
         '''
@@ -121,7 +134,7 @@ class Tracks(Scene):
 
     def move_label_to_dot(self,label,tracer=None):
         '''
-        Move the label to the dot.
+        Move the source label to the dot.
         '''
         label.next_to(tracer,UP)
 
@@ -159,13 +172,20 @@ class Tracks(Scene):
                 tracers.append(tracer)
                 traces.append(trace)
 
-            label = MathTex(self.source_names[source_index],font_size=25)
+            label = Tex(self.source_names[source_index],font_size=25)
             position_func  = partial(self.move_label_to_dot,tracer=tracers[-1])
             # label.add_updater(lambda d: d.next_to(tracers[-1],UP))
             label.add_updater(position_func)
 
 
             labels.append(label)
+
+
+        # Initial state of the PSD
+        ASD_plot = self.ax.plot(lambda freqs: np.sqrt(freqs)*self.ASD_with_confusion(freqs),color='red')
+
+        # Set the ASD to update with the confusion noise as the mission timer updates. 
+        ASD_plot.add_updater(lambda m: m.become(self.ax.plot(lambda freqs: np.sqrt(freqs)*self.ASD_with_confusion(freqs),color=self.psd_color)))
 
 
         # #Setting up label
@@ -178,7 +198,7 @@ class Tracks(Scene):
         T_label_.add_updater(lambda d: d.next_to(T_label,LEFT))
 
         
-        self.add(self.ax,*tracers,T_label,T_label_,*traces,*labels,self.axes_labels)
+        self.add(self.ax,*tracers,T_label,T_label_,*traces,*labels,self.axes_labels,ASD_plot)
         self.wait()
         
         # Increment the T_years all the way slowly to 4 years, this will automatically update our plot due to the updater function above
