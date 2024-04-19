@@ -2,7 +2,8 @@ import numpy as np
 from manim import *
 from manim import WHITE, BLACK
 from .Sources import TaylorF2Ecc
-
+from functools import partial
+import copy
 class Tracks(Scene):
     '''
     Class for creating the final animation tracks
@@ -23,7 +24,7 @@ class Tracks(Scene):
             y_max (float): Maximum strain for the plot (Defaults to 1.e-19).
             t_min (float): Minimum time for the animation (Defauls to 1.e-10 to avoid T=0 errors).
             run_time (float): Total run time for the animation (Defaults to 25s).
-        '''
+      '''
         
         self.f_low = frequency_limits[0]
         self.f_high = frequency_limits[1]
@@ -48,7 +49,6 @@ class Tracks(Scene):
         self.generate_splines()
 
         super().__init__()
-
         # Create the axes we will be animating on
         self.ax = Axes(x_range=[np.log10(self.f_low),np.log10(self.f_high),1],
             y_range=[np.log10(self.y_min),np.log10(self.y_max),1],
@@ -66,6 +66,16 @@ class Tracks(Scene):
     def generate_splines(self):
         '''
         Generate the waveform splines for every source.
+
+        The datastructure it ends up creating is the following
+
+        source_splines = [[t_f_spline_1,amplitude_time_spline_1],[t_f_spline_2,amplitude_time_spline_2],...]   
+
+        Where:
+        
+        t_f_spline_i : [[t_f_source_i_harmonic_1],[t_f__source_i_harmonic_2_],...,[t_f_source_i_harmonic_n]]
+        amplitude_time_spline_i : [[amplitude_time_source_i_harmonic_1],[amplitude_time_source_i_harmonic_2],...,[amplitude_time_source_i_harmonic_n]]
+
         '''
         # Each source is a tuple of (source_type,parameters)
         self.source_names = []
@@ -93,11 +103,40 @@ class Tracks(Scene):
         '''
         pass
 
-    def construct(self):
+    def position_at_time(self,dot,spline_t_f=None,spline_t_A=None):
         '''
+        Used to move the dot along the spline at the current time. 
+
+        Args:
+            dot (Dot): Dot to move along the spline.
+            spline_t_f (CubicSpline (scipy)): Spline for the frequency (as a function of time).
+            spline_t_A (CubicSpline (scipy)): Spline for the amplitude (as a function of time).
+
         '''
+
+        position = self.ax.c2p(spline_t_f(self.mission_time_tracker.get_value()),
+                                                                        spline_t_A(self.mission_time_tracker.get_value()))
+        
+        dot.move_to(position)
+
+    def move_label_to_dot(self,label,tracer=None):
+        '''
+        Move the label to the dot.
+        '''
+        label.next_to(tracer,UP)
+
+    
+
+    def construct(self,):
+        '''
+        Main function to construct the animation.
+        This function is called by manim internally to create the animation.
+        '''
+        # Holding lists for tracing dot each harmonic of each sources
         tracers = []
+        # Holding lists for the traces of each harmonic of each source
         traces = []
+        # Labels for each source
         labels = []
 
         for source_index,source_spline_container in enumerate(self.source_splines):
@@ -105,7 +144,6 @@ class Tracks(Scene):
             num_harmonics = len(source_spline_container[0])
 
             for i in range(num_harmonics):
-
                 tracer = Dot(point=np.array(self.ax.c2p(source_spline_container[0][i](0),source_spline_container[1][i](0))),
                                 color=self.source_colors[source_index])
                 
@@ -113,24 +151,28 @@ class Tracks(Scene):
                 trace = TracedPath(tracer.get_center,stroke_width=5,stroke_color=self.source_colors[source_index])
 
 
-                tracer.add_updater(lambda dot: dot.move_to(self.ax.c2p(source_spline_container[0][i](self.mission_time_tracker.get_value()),
-                                                                        source_spline_container[1][i](self.mission_time_tracker.get_value()))))
+                # Partial function to lock in the arguments for the spline at the current source and harmonic and so it wont change as in 
+                #       https://stackoverflow.com/questions/66131048/python-lambda-function-is-not-being-called-correctly-from-within-a-for-loop
+                trace_func = partial(self.position_at_time,spline_t_f=copy.deepcopy(source_spline_container[0][i]),spline_t_A=copy.deepcopy(source_spline_container[1][i]))
+                tracer.add_updater(trace_func)
                 
+                tracers.append(tracer)
+                traces.append(trace)
 
-            label = MathTex(self.source_names[source_index],font_size=25)    
-            label.add_updater(lambda d: d.next_to(tracer, UP))
+            label = MathTex(self.source_names[source_index],font_size=25)
+            position_func  = partial(self.move_label_to_dot,tracer=tracers[-1])
+            # label.add_updater(lambda d: d.next_to(tracers[-1],UP))
+            label.add_updater(position_func)
 
-            tracers.append(tracer)
-            traces.append(trace)
+
             labels.append(label)
-
 
 
         # #Setting up label
         T_label = DecimalNumber(0,num_decimal_places=2,font_size=27)
         # UR being upper right
         T_label.to_edge(UR)
-        T_label.add_updater(lambda d: d.set_value(self.mission_time_tracker.get_value()/365.25*24*60*60))
+        T_label.add_updater(lambda d: d.set_value(self.mission_time_tracker.get_value()/(365.25*24*60*60)))
 
         T_label_ = Tex(r'Time from beginning of LISA mission (years) :',font_size=27)
         T_label_.add_updater(lambda d: d.next_to(T_label,LEFT))
@@ -142,6 +184,6 @@ class Tracks(Scene):
         # Increment the T_years all the way slowly to 4 years, this will automatically update our plot due to the updater function above
         self.play(ApplyMethod(self.mission_time_tracker.increment_value,self.T_obs),run_time=self.run_time,rate_func=linear)
         
-        self.play(FadeOut(T_label),FadeOut(T_label_),run_time=1)
+        # self.play(FadeOut(T_label),FadeOut(T_label_),run_time=1)
         self.wait(3)
     
