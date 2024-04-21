@@ -295,7 +295,7 @@ class TF2Ecc(Model):
         self.initial_orbital_phase = self.parameters['phi0']
         self.f_low = self.parameters['f_low']
 
-        f_high = freqs[-1]
+        self.f_high = [freqs[-1]]
         self.f0s = [self.f_low]
 
         # Unit conversions 
@@ -313,7 +313,7 @@ class TF2Ecc(Model):
         # initial v 
         self.v0 = (np.pi*self.M*self.f_low)**(1/3) #(pi M f_0)**(1/3)
         # final v 
-        self.v1 = (np.pi*self.M*f_high)**(1/3)
+        self.v1 = (np.pi*self.M*self.f_high[0])**(1/3)
         # All vs
         self.v = (np.pi*self.M*self.freqs)**(1/3)
 

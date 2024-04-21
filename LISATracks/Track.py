@@ -1,7 +1,7 @@
 import numpy as np 
 from manim import *
 from manim import WHITE, BLACK
-from .Sources import TaylorF2Ecc
+from .Sources import TaylorF2Ecc, IMRPhenomHM
 from functools import partial
 import copy
 from .Confusion import Add_confusion, psd_SCIRD
@@ -88,6 +88,7 @@ class Tracks(Scene):
         self.source_colors = []
 
         for source in self.sources:
+
             if source[0] == 'TaylorF2Ecc':
                 # Initialise source
                 smbbh = TaylorF2Ecc.TF2Ecc(source[2],self.freqs,self.T_obs)
@@ -99,6 +100,19 @@ class Tracks(Scene):
                 self.source_colors.append(source[1]['Color'])
 
                 self.source_splines.append([t_f_spline,amplitude_time_spline])
+
+            elif source[0] == 'IMRPhenomHM':
+                # Initialise source
+                imrphenomhm = IMRPhenomHM.IMRPhenomHM(source[2],self.freqs,self.T_obs)
+                # Generate splines 
+                t_f_spline, amplitude_time_spline = imrphenomhm.generate_track_splines(self.freqs)
+
+                self.source_names.append(source[1]['Name'])
+
+                self.source_colors.append(source[1]['Color'])
+
+                self.source_splines.append([t_f_spline,amplitude_time_spline])
+
             # Add other sources as else statements 
             else:
                 assert False, "Source type not implemented"
@@ -167,6 +181,7 @@ class Tracks(Scene):
                 # Partial function to lock in the arguments for the spline at the current source and harmonic and so it wont change as in 
                 #       https://stackoverflow.com/questions/66131048/python-lambda-function-is-not-being-called-correctly-from-within-a-for-loop
                 trace_func = partial(self.position_at_time,spline_t_f=copy.deepcopy(source_spline_container[0][i]),spline_t_A=copy.deepcopy(source_spline_container[1][i]))
+
                 tracer.add_updater(trace_func)
                 
                 tracers.append(tracer)
