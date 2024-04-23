@@ -63,7 +63,7 @@ class Tracks(Scene):
         
         # Axes labels
         self.axes_labels = self.ax.get_axis_labels(MathTex('f [Hz]').scale(0.6), 
-                            Tex(r'Characteristic Strain' ).scale(0.6))
+                            Tex(r'Strain $\rm{\sqrt{Hz^{-1/2}}}$' ).scale(0.6))
 
 
 
@@ -172,7 +172,7 @@ class Tracks(Scene):
 
             for i in range(num_harmonics):
                 tracer = Dot(point=np.array(self.ax.c2p(source_spline_container[0][i](0),source_spline_container[1][i](0))),
-                                color=self.source_colors[source_index])
+                                color=self.source_colors[source_index],radius=0.06)
                 
                 # Traced path for the source
                 trace = TracedPath(tracer.get_center,stroke_width=5,stroke_color=self.source_colors[source_index])
@@ -187,7 +187,7 @@ class Tracks(Scene):
                 tracers.append(tracer)
                 traces.append(trace)
 
-            label = Tex(self.source_names[source_index],font_size=25)
+            label = Tex(self.source_names[source_index],font_size=20)
             position_func  = partial(self.move_label_to_dot,tracer=tracers[-1])
             # label.add_updater(lambda d: d.next_to(tracers[-1],UP))
             label.add_updater(position_func)

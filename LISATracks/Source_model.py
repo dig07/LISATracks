@@ -75,7 +75,7 @@ class Model(object):
 
             # Interpolate the function of t->f map
             t_f_spline = scipy.interpolate.CubicSpline(t_f_map,freqs[(freqs>=f0) & (freqs<=self.f_high[i])])
-            amplitude_time_spline = scipy.interpolate.CubicSpline(t_f_map,2*t_f_spline(t_f_map)*np.abs(Amplitude))
+            amplitude_time_spline = scipy.interpolate.CubicSpline(t_f_map,2*np.sqrt(t_f_spline(t_f_map))*np.abs(Amplitude))
 
 
             t_f_container.append(t_f_spline)
