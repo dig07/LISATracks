@@ -63,7 +63,7 @@ class Tracks(Scene):
         
         # Axes labels
         self.axes_labels = self.ax.get_axis_labels(MathTex('f [Hz]').scale(0.6), 
-                            Tex(r'Strain $\rm{\sqrt{Hz^{-1/2}}}$' ).scale(0.6))
+                            Tex(r'Strain $\rm{1/\sqrt{Hz}}$' ).scale(0.6))
 
 
 
