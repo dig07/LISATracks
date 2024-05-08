@@ -1,7 +1,9 @@
 import numpy as np 
 from manim import *
 from manim import WHITE, BLACK
-from .Sources import TaylorF2Ecc, IMRPhenomHM
+from manim import config as global_config
+
+from .Sources import TaylorF2Ecc, IMRPhenomHM, FEW
 from functools import partial
 import copy
 from .Confusion import Add_confusion, psd_SCIRD
@@ -16,7 +18,8 @@ class Tracks(Scene):
                  y_max=1.e-19,
                  t_min = 1.e-10,
                  run_time=25,
-                 psd_color='red') -> None:
+                 psd_color='red',
+                 light_or_dark_mode = 'dark') -> None:
         '''
         Args:
             T_obs (float): Observation time.
@@ -27,6 +30,8 @@ class Tracks(Scene):
             y_max (float): Maximum strain for the plot (Defaults to 1.e-19).
             t_min (float): Minimum time for the animation (Defauls to 1.e-10 to avoid T=0 errors).
             run_time (float): Total run time for the animation (Defaults to 25s).
+            psd_color (str): Color of the ASD plot (Defaults to 'red').
+            light_or_dark_mode (str): Light or dark mode for the plot (Defaults to 'dark').
       '''
         
         self.f_low = frequency_limits[0]
@@ -53,17 +58,40 @@ class Tracks(Scene):
         # Create the sources/Generate the splines
         self.generate_splines()
 
+        self.light_or_dark_mode = light_or_dark_mode
+
+        # Set color-scheme based on light or dark mode
+        if self.light_or_dark_mode == 'light':
+            self.background_color = WHITE
+            self.axes_color = BLACK
+            self.text_color = BLACK 
+        elif self.light_or_dark_mode == 'dark':
+            self.background_color = BLACK
+            self.axes_color = WHITE
+            self.text_color = WHITE
+        
+        config.background_color = self.background_color
+
+        
         super().__init__()
         # Create the axes we will be animating on
         self.ax = Axes(x_range=[np.log10(self.f_low),np.log10(self.f_high),1],
             y_range=[np.log10(self.y_min),np.log10(self.y_max),1],
             y_axis_config={"scaling": LogBase(custom_labels=True),"font_size":25,"include_tip":False},
             x_axis_config={"scaling": LogBase(custom_labels=True),"font_size":25,"include_tip":False},
-            axis_config={"include_numbers": True})
+            axis_config={"include_numbers": True,"color":self.axes_color},)
         
+        # Force axes colours
+        for tick in self.ax.get_x_axis():
+            tick.set_color(self.axes_color)
+ 
+        for tick in self.ax.get_y_axis():
+            tick.set_color(self.axes_color)
+
+
         # Axes labels
         self.axes_labels = self.ax.get_axis_labels(MathTex('f [Hz]').scale(0.6), 
-                            Tex(r'Strain $\rm{1/\sqrt{Hz}}$' ).scale(0.6))
+                            Tex(r'Strain $\rm{1/\sqrt{Hz}}$' ).scale(0.6)).set_color(self.axes_color)
 
 
 
@@ -95,28 +123,28 @@ class Tracks(Scene):
                 # Generate splines 
                 t_f_spline, amplitude_time_spline = smbbh.generate_track_splines(self.freqs)
 
-                self.source_names.append(source[1]['Name'])
-
-                self.source_colors.append(source[1]['Color'])
-
-                self.source_splines.append([t_f_spline,amplitude_time_spline])
-
             elif source[0] == 'IMRPhenomHM':
                 # Initialise source
                 imrphenomhm = IMRPhenomHM.IMRPhenomHM(source[2],self.freqs,self.T_obs)
                 # Generate splines 
                 t_f_spline, amplitude_time_spline = imrphenomhm.generate_track_splines(self.freqs)
 
-                self.source_names.append(source[1]['Name'])
+            elif source[0] == 'EMRI':
+                # Initialise source
+                emri = FEW.FEW_FD(source[2],self.freqs,self.T_obs)
+                # Generate splines
+                t_f_spline, amplitude_time_spline = emri.generate_track_splines(self.freqs)
 
-                self.source_colors.append(source[1]['Color'])
-
-                self.source_splines.append([t_f_spline,amplitude_time_spline])
 
             # Add other sources as else statements 
             else:
                 assert False, "Source type not implemented"
 
+            self.source_names.append(source[1]['Name'])
+
+            self.source_colors.append(source[1]['Color'])
+
+            self.source_splines.append([t_f_spline,amplitude_time_spline])
     def ASD_with_confusion(self,freqs):
         '''
         Calculate the ASD with confusion noise for the current mission time.
@@ -187,7 +215,7 @@ class Tracks(Scene):
                 tracers.append(tracer)
                 traces.append(trace)
 
-            label = Tex(self.source_names[source_index],font_size=20)
+            label = Tex(self.source_names[source_index],font_size=20,color = self.text_color)
             position_func  = partial(self.move_label_to_dot,tracer=tracers[-1])
             # label.add_updater(lambda d: d.next_to(tracers[-1],UP))
             label.add_updater(position_func)
@@ -204,12 +232,12 @@ class Tracks(Scene):
 
 
         # #Setting up label
-        T_label = DecimalNumber(0,num_decimal_places=2,font_size=27)
+        T_label = DecimalNumber(0,num_decimal_places=2,font_size=27,color=self.text_color)
         # UR being upper right
         T_label.to_edge(UR)
         T_label.add_updater(lambda d: d.set_value(self.mission_time_tracker.get_value()/(365.25*24*60*60)))
 
-        T_label_ = Tex(r'Time from beginning of LISA mission (years) :',font_size=27)
+        T_label_ = Tex(r'Time from beginning of LISA mission (years) :',font_size=27,color=self.text_color)
         T_label_.add_updater(lambda d: d.next_to(T_label,LEFT))
 
         
