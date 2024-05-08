@@ -19,7 +19,9 @@ class Tracks(Scene):
                  t_min = 1.e-10,
                  run_time=25,
                  psd_color='red',
-                 light_or_dark_mode = 'dark') -> None:
+                 light_or_dark_mode = 'dark',
+                 render_axes = True,
+                 render_mission_timer = True) -> None:
         '''
         Args:
             T_obs (float): Observation time.
@@ -32,6 +34,8 @@ class Tracks(Scene):
             run_time (float): Total run time for the animation (Defaults to 25s).
             psd_color (str): Color of the ASD plot (Defaults to 'red').
             light_or_dark_mode (str): Light or dark mode for the plot (Defaults to 'dark').
+            render_axes (bool): Render the axes (Defaults to True).
+            render_mission_timer (bool): Render the mission time (Defaults to True).
       '''
         
         self.f_low = frequency_limits[0]
@@ -70,6 +74,9 @@ class Tracks(Scene):
             self.axes_color = WHITE
             self.text_color = WHITE
         
+        self.render_axes = render_axes
+        self.render_mission_timer = render_mission_timer
+
         config.background_color = self.background_color
 
         
@@ -240,8 +247,12 @@ class Tracks(Scene):
         T_label_ = Tex(r'Time from beginning of LISA mission (years) :',font_size=27,color=self.text_color)
         T_label_.add_updater(lambda d: d.next_to(T_label,LEFT))
 
-        
-        self.add(self.ax,*tracers,T_label,T_label_,*traces,*labels,self.axes_labels,ASD_plot)
+        if self.render_axes: 
+            self.add(self.ax,self.axes_labels)
+        if self.render_mission_timer:
+            self.add(T_label,T_label_)
+            
+        self.add(*tracers,*traces,*labels,ASD_plot)
         self.wait()
         
         # Increment the T_years all the way slowly to 4 years, this will automatically update our plot due to the updater function above
