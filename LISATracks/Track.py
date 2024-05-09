@@ -21,7 +21,10 @@ class Tracks(Scene):
                  psd_color='red',
                  light_or_dark_mode = 'dark',
                  render_axes = True,
-                 render_mission_timer = True) -> None:
+                 render_mission_timer = True,
+                 axis_label_fontsize = 25,
+                 source_label_fontsize = 20,
+                 general_text_fontsize=27) -> None:
         '''
         Args:
             T_obs (float): Observation time.
@@ -36,6 +39,9 @@ class Tracks(Scene):
             light_or_dark_mode (str): Light or dark mode for the plot (Defaults to 'dark').
             render_axes (bool): Render the axes (Defaults to True).
             render_mission_timer (bool): Render the mission time (Defaults to True).
+            axis_label_fontsize (int): Fontsize for the axis labels (Defaults to 25).
+            source_label_fontsize (int): Fontsize for the source labels (Defaults to 20).
+            general_text_fontsize (int): Fontsize for the general text (Defaults to 27).
       '''
         
         self.f_low = frequency_limits[0]
@@ -64,6 +70,9 @@ class Tracks(Scene):
 
         self.light_or_dark_mode = light_or_dark_mode
 
+        self.source_label_fontsize = source_label_fontsize
+        self.general_text_fontsize = general_text_fontsize
+
         # Set color-scheme based on light or dark mode
         if self.light_or_dark_mode == 'light':
             self.background_color = WHITE
@@ -78,14 +87,13 @@ class Tracks(Scene):
         self.render_mission_timer = render_mission_timer
 
         config.background_color = self.background_color
-
         
         super().__init__()
         # Create the axes we will be animating on
         self.ax = Axes(x_range=[np.log10(self.f_low),np.log10(self.f_high),1],
             y_range=[np.log10(self.y_min),np.log10(self.y_max),1],
-            y_axis_config={"scaling": LogBase(custom_labels=True),"font_size":25,"include_tip":False},
-            x_axis_config={"scaling": LogBase(custom_labels=True),"font_size":25,"include_tip":False},
+            y_axis_config={"scaling": LogBase(custom_labels=True),"font_size":axis_label_fontsize,"include_tip":False},
+            x_axis_config={"scaling": LogBase(custom_labels=True),"font_size":axis_label_fontsize,"include_tip":False},
             axis_config={"include_numbers": True,"color":self.axes_color},)
         
         # Force axes colours
@@ -97,8 +105,8 @@ class Tracks(Scene):
 
 
         # Axes labels
-        self.axes_labels = self.ax.get_axis_labels(MathTex('f [Hz]').scale(0.6), 
-                            Tex(r'Strain $\rm{1/\sqrt{Hz}}$' ).scale(0.6)).set_color(self.axes_color)
+        self.axes_labels = self.ax.get_axis_labels(MathTex('f [Hz]',font_size = axis_label_fontsize), 
+                            Tex(r'Strain $\rm{1/\sqrt{Hz}}$',font_size = axis_label_fontsize)).set_color(self.axes_color)
 
 
 
@@ -222,7 +230,7 @@ class Tracks(Scene):
                 tracers.append(tracer)
                 traces.append(trace)
 
-            label = Tex(self.source_names[source_index],font_size=20,color = self.text_color)
+            label = Tex(self.source_names[source_index],font_size=self.source_label_fontsize,color = self.text_color)
             position_func  = partial(self.move_label_to_dot,tracer=tracers[-1])
             # label.add_updater(lambda d: d.next_to(tracers[-1],UP))
             label.add_updater(position_func)
@@ -239,12 +247,12 @@ class Tracks(Scene):
 
 
         # #Setting up label
-        T_label = DecimalNumber(0,num_decimal_places=2,font_size=27,color=self.text_color)
+        T_label = DecimalNumber(0,num_decimal_places=2,font_size=self.general_text_fontsize,color=self.text_color)
         # UR being upper right
         T_label.to_edge(UR)
         T_label.add_updater(lambda d: d.set_value(self.mission_time_tracker.get_value()/(365.25*24*60*60)))
 
-        T_label_ = Tex(r'Time from beginning of LISA mission (years) :',font_size=27,color=self.text_color)
+        T_label_ = Tex(r'Time from beginning of LISA mission (years) :',font_size=self.general_text_fontsize,color=self.text_color)
         T_label_.add_updater(lambda d: d.next_to(T_label,LEFT))
 
         if self.render_axes: 
