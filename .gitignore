@@ -1,2 +1,4 @@
 LISATracks.egg-*
 *__pycache__*
+Examples/media/*
+Examples/.ipynb_checkpoints/*
