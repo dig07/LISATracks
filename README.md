@@ -12,3 +12,4 @@ Light mode animation option also available:
 
 https://github.com/user-attachments/assets/afe41ac0-4652-4b02-a6ff-46eacd49bc5a
 
+The above dark and light mode animations can be made from the following <a href="https://github.com/dig07/LISATracks/blob/main/Examples/Multiple_sources_animation.ipynb">Notebook</a>.
