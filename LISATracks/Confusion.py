@@ -1,7 +1,6 @@
 
 # This provides a fit for the confusion noise, originally taken from 1703.09722
 # Updated to 2103.14598 + 2108.01167
-# AK: Will need to merge with psd.py
 
 
 import numpy as np

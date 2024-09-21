@@ -13,7 +13,11 @@ class Tracks(Scene):
     Class for creating the final animation tracks
     '''
 
-    def __init__(self,T_obs,frequency_limits,freq_resolution,sources,
+    def __init__(self,
+                 T_obs,
+                 frequency_limits,
+                 freq_resolution,
+                 sources,
                  y_min=1.e-21,
                  y_max=1.e-19,
                  t_min = 1.e-10,
@@ -138,13 +142,13 @@ class Tracks(Scene):
                 # Generate splines 
                 t_f_spline, amplitude_time_spline = smbbh.generate_track_splines(self.freqs)
 
-            elif source[0] == 'IMRPhenomHM':
+            elif source[0] == 'IMRPhenomHM': # Not yet working properly 
                 # Initialise source
                 imrphenomhm = IMRPhenomHM.IMRPhenomHM(source[2],self.freqs,self.T_obs)
                 # Generate splines 
                 t_f_spline, amplitude_time_spline = imrphenomhm.generate_track_splines(self.freqs)
 
-            elif source[0] == 'EMRI':
+            elif source[0] == 'EMRI': # Not yet workng
                 # Initialise source
                 emri = FEW.FEW_FD(source[2],self.freqs,self.T_obs)
                 # Generate splines

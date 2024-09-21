@@ -80,7 +80,7 @@ class IMRPhenomHM(Model):
             # Cut off the amps, phases and tf maps at the cutoff frequency for each mode
             self.amps.append(amps[i][self.freqs<=self.freqs[freq_index_of_violation]])
             self.phase.append(phase[i][self.freqs<=self.freqs[freq_index_of_violation]])
-            # tf is roughly set up to be 0 at the merger, so if we += self.tc to this, everything "before" LISa merger will be negative, and since the mission 
+            # tf is roughly set up to be 0 at the merger, so if we += self.tc to this, everything "before" the merger will be negative, and since the mission 
             #      timer is set to 0 initially and only goes up, wont matter.
             self.tf.append(tf[i][self.freqs<=self.freqs[freq_index_of_violation]]+self.tc)
 

@@ -15,7 +15,6 @@ class Model(object):
         - Amplitudes: Returns the amplitudes as a function of frequency for each harmonic. 
         - Phases:  Returns the Phases as a function of frequency for each harmonic. 
         - Time_frequency:  Returns the time-frequency map as a function of frequency for each harmonic. 
-
     """
     __metaclass__ = ABCMeta
     names =None # Name of the sourcetypes

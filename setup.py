@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/dig07/LISATracks",
     packages=setuptools.find_packages(),
     python_requires='>=3',
-    install_requires=['numpy', 'scipy', 'matplotlib','scikit-learn','manim'],
+    install_requires=['numpy', 'scipy', 'matplotlib','scikit-learn', 'manim','jupyterlab'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
