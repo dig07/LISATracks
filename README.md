@@ -1,6 +1,6 @@
 <h1>LISATracks</h1>
 
-Package to make animations of gravitational wave strain as function of time, for sources in LISA. Currently under development.  
+Package to make animations of gravitational wave strain as function of time, for sources in LISA. Built on top of the amazing <a href="https://www.manim.community/">Manim</a> animation library. Currently under development.  
 
 https://github.com/user-attachments/assets/12b2da8c-53eb-4a4d-9ea6-5251fc9bc6e7
 
