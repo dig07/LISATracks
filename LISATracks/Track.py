@@ -109,8 +109,8 @@ class Tracks(Scene):
 
 
         # Axes labels
-        self.axes_labels = self.ax.get_axis_labels(MathTex('f [Hz]',font_size = axis_label_fontsize), 
-                            Tex(r'Strain $\rm{1/\sqrt{Hz}}$',font_size = axis_label_fontsize)).set_color(self.axes_color)
+        self.axes_labels = self.ax.get_axis_labels(MathTex('f \mathrm{[Hz]}',font_size = axis_label_fontsize), 
+                            Tex(r'Characteristic strain',font_size = axis_label_fontsize)).set_color(self.axes_color)
 
 
 
