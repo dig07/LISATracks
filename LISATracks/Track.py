@@ -3,7 +3,7 @@ from manim import *
 from manim import WHITE, BLACK
 from manim import config as global_config
 
-from .Sources import TaylorF2Ecc, IMRPhenomHM, FEW
+from .Sources import TaylorF2Ecc
 from functools import partial
 import copy
 from .Confusion import Add_confusion, psd_SCIRD
@@ -109,8 +109,8 @@ class Tracks(Scene):
 
 
         # Axes labels
-        self.axes_labels = self.ax.get_axis_labels(MathTex('f [Hz]',font_size = axis_label_fontsize), 
-                            Tex(r'Strain $\rm{1/\sqrt{Hz}}$',font_size = axis_label_fontsize)).set_color(self.axes_color)
+        self.axes_labels = self.ax.get_axis_labels(MathTex('f \mathrm{[Hz]}',font_size = axis_label_fontsize), 
+                            Tex(r'Characteristic strain',font_size = axis_label_fontsize)).set_color(self.axes_color)
 
 
 
@@ -141,19 +141,6 @@ class Tracks(Scene):
                 smbbh = TaylorF2Ecc.TF2Ecc(source[2],self.freqs,self.T_obs)
                 # Generate splines 
                 t_f_spline, amplitude_time_spline = smbbh.generate_track_splines(self.freqs)
-
-            elif source[0] == 'IMRPhenomHM': # Not yet working properly 
-                # Initialise source
-                imrphenomhm = IMRPhenomHM.IMRPhenomHM(source[2],self.freqs,self.T_obs)
-                # Generate splines 
-                t_f_spline, amplitude_time_spline = imrphenomhm.generate_track_splines(self.freqs)
-
-            elif source[0] == 'EMRI': # Not yet workng
-                # Initialise source
-                emri = FEW.FEW_FD(source[2],self.freqs,self.T_obs)
-                # Generate splines
-                t_f_spline, amplitude_time_spline = emri.generate_track_splines(self.freqs)
-
 
             # Add other sources as else statements 
             else:
