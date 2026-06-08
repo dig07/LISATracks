@@ -56,12 +56,14 @@ class Model(object):
         Returns:
             t_f_container: list of splines for the time-frequency map for each harmonic
             amplitude_time_container: list of splines for the amplitude (in characheristic strain) as a function of time for each harmonic
+            time_window_container: list of (t_start,t_end) tuples giving the mission-time interval over which each harmonic's track is well defined (band entry to the end of the t-f map)
         """
         Amps, Phases, Time_freqs = self.Amplitudes(), self.Phases(), self.Time_frequency()
 
         # For each harmonic
         t_f_container = []
         amplitude_time_container = []
+        time_window_container = []
 
         for i in range(self.num_harmonics):
 
@@ -79,5 +81,6 @@ class Model(object):
 
             t_f_container.append(t_f_spline)
             amplitude_time_container.append(amplitude_time_spline)
+            time_window_container.append((t_f_map[0], t_f_map[-1]))
 
-        return(t_f_container,amplitude_time_container)
+        return(t_f_container,amplitude_time_container,time_window_container)
