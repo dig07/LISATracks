@@ -71,9 +71,6 @@ class Tracks(Scene):
 
         self.sources = sources
 
-        # Create the sources/Generate the splines
-        self.generate_splines()
-
         self.light_or_dark_mode = light_or_dark_mode
 
         self.source_label_fontsize = source_label_fontsize
@@ -83,12 +80,15 @@ class Tracks(Scene):
         if self.light_or_dark_mode == 'light':
             self.background_color = WHITE
             self.axes_color = BLACK
-            self.text_color = BLACK 
+            self.text_color = BLACK
         elif self.light_or_dark_mode == 'dark':
             self.background_color = BLACK
             self.axes_color = WHITE
             self.text_color = WHITE
-        
+
+        # Create the sources/Generate the splines
+        self.generate_splines()
+
         self.render_axes = render_axes
         self.render_mission_timer = render_mission_timer
 
@@ -145,7 +145,40 @@ class Tracks(Scene):
         # Wether to trace the source or not (used for DWDs, which are monochromatic and so don't have a meaningful track to trace)
         self.source_traced = []
 
+        # Opacity for source label display
+        self.display_source_label_opacity = []
+
+        # Label direction relative to the source dot (UP, DOWN, LEFT, RIGHT, etc.). If None, defaults to UP.
+        self.label_direction = []
+
+        # Fontsize for source label display. If None, defaults to self.source_label_fontsize
+        self.label_fontsize = []
+
+        # Color for source label display. If None, defaults to self.text_color
+        self.label_color = []
+
         for source in self.sources:
+
+            # If the source has a DisplayOpacity key, use it to set the opacity of the source label. If not, default to 1 (fully visible).
+            if source[1].get('DisplayOpacity') is None:
+                self.display_source_label_opacity.append(1)
+            else:
+                self.display_source_label_opacity.append(source[1]['DisplayOpacity'])
+
+            if source[1].get('LabelDirection') is None:
+                self.label_direction.append(UP)
+            else:
+                self.label_direction.append(source[1]['LabelDirection'])
+
+            if source[1].get('LabelFontsize') is None:
+                self.label_fontsize.append(self.source_label_fontsize)
+            else:
+                self.label_fontsize.append(source[1]['LabelFontsize'])
+
+            if source[1].get('LabelColor') is None:
+                self.label_color.append(self.text_color)
+            else:
+                self.label_color.append(source[1]['LabelColor'])
 
             if source[0] == 'TaylorF2Ecc':
                 # Initialise source
@@ -153,6 +186,7 @@ class Tracks(Scene):
                 # Generate splines
                 t_f_spline, amplitude_time_spline, time_windows = smbbh.generate_track_splines(self.freqs)
                 mode_labels = [None]*len(t_f_spline)
+
                 gated = False
                 traced = True
 
@@ -162,6 +196,7 @@ class Tracks(Scene):
                 # Generate splines
                 t_f_spline, amplitude_time_spline, time_windows = mbbh.generate_track_splines(self.freqs)
                 mode_labels = [f'({l},{m})' for (l,m) in mbbh.modes]
+
                 gated = True
                 traced = True
 
@@ -172,6 +207,7 @@ class Tracks(Scene):
                 t_f_spline, amplitude_time_spline, time_windows = dwd.generate_track_splines(self.freqs)
                 mode_labels = [None]*len(t_f_spline)
                 # Always in band, the source just climbs vertically as it accumulates cycles
+                
                 gated = False
                 traced = False
 
@@ -238,13 +274,12 @@ class Tracks(Scene):
         time = self.mission_time_tracker.get_value()
         mobject.set_opacity(0 if (time < t_start or time > t_end) else 1)
 
-    def move_label_to_dot(self,label,tracer=None):
+    def move_label_to_dot(self,label,tracer=None,direction=UP):
         '''
         Move the source label to the dot.
         '''
-        label.next_to(tracer,UP)
+        label.next_to(tracer,direction)
 
-    
 
     def construct(self,):
         '''
@@ -302,13 +337,15 @@ class Tracks(Scene):
                 # Add a small mode label (e.g. '(2,2)') above the dot, in the source colour
                 mode_label_text = self.source_mode_labels[source_index][i]
                 if mode_label_text is not None:
-                    mode_label = MathTex(mode_label_text,font_size=self.source_label_fontsize*0.6,color=self.source_colors[source_index])
+                    mode_label = MathTex(mode_label_text,font_size=self.source_label_fontsize*0.75,color=self.source_colors[source_index])
                     mode_label.add_updater(partial(self.move_label_to_dot,tracer=tracer))
                     mode_label.add_updater(partial(self.update_visibility,t_start=t_start,t_end=t_end))
                     mode_labels.append(mode_label)
+            
+            label = Tex(self.source_names[source_index],font_size=self.label_fontsize[source_index],color = self.label_color[source_index])
 
-            label = Tex(self.source_names[source_index],font_size=self.source_label_fontsize,color = self.text_color)
-            position_func  = partial(self.move_label_to_dot,tracer=tracers[-1])
+            position_func  = partial(self.move_label_to_dot,tracer=tracers[-1],direction=self.label_direction[source_index])
+
             # label.add_updater(lambda d: d.next_to(tracers[-1],UP))
             label.add_updater(position_func)
             # Show the source name only while a gated source is visible
@@ -318,6 +355,8 @@ class Tracks(Scene):
                 source_end = max(window[1] for window in source_window)
                 label.add_updater(partial(self.update_visibility,t_start=source_start,t_end=source_end))
 
+            # Set the opacity of the label based on the DisplayOpacity parameter for this source
+            label.set_opacity(self.display_source_label_opacity[source_index])
 
             labels.append(label)
 
