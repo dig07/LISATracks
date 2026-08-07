@@ -46,41 +46,63 @@ class Model(object):
         pass    
 
 
+    def track_samples(self,freqs):
+        """
+        Sample each harmonic's track as (times, frequencies, characteristic strain) arrays.
+
+        This is the hook to override for a source whose track is not naturally parametrised by
+        frequency (e.g. a monochromatic DWD, whose whole track lives inside a single bin of the
+        master frequency grid and so must be sampled in time instead).
+
+        The default implementation is the frequency-parametrised one used by chirping sources: the
+        master frequency grid is restricted to each harmonic's band, Time_frequency() supplies the
+        mission time at each of those frequencies, and the characteristic strain is 2 f |h~(f)|.
+
+        Note the DWD setup overloads this with a time-parametrised version, since the track is naturally parametrised 
+        by mission time rather than frequency.
+
+        Args:
+            freqs: array of frequencies over which to evaluate the waveform.
+        Returns:
+            list of (times, frequencies, characteristic_strain) tuples of arrays, one per harmonic.
+        """
+
+        Amps, Time_freqs = self.Amplitudes(),  self.Time_frequency()
+
+        samples = []
+
+        for i in range(self.num_harmonics):
+
+            # Frequencies of the master grid that lie inside this harmonic's band
+            freqs_in_band = freqs[(freqs>=self.f0s[i]) & (freqs<=self.f_high[i])]
+
+            samples.append((Time_freqs[i], freqs_in_band, 2*freqs_in_band*np.abs(Amps[i])))
+
+        return samples
+
+
     def generate_track_splines(self,freqs):
         """
         Generate the splines for each harmonic over the frequency range for the given parameters.
 
         Args:
             parameters: list of parameters
-            freqs: array of frequencies over which to evaluate the waveform. 
+            freqs: array of frequencies over which to evaluate the waveform.
         Returns:
             t_f_container: list of splines for the time-frequency map for each harmonic
             amplitude_time_container: list of splines for the amplitude (in characheristic strain) as a function of time for each harmonic
             time_window_container: list of (t_start,t_end) tuples giving the mission-time interval over which each harmonic's track is well defined (band entry to the end of the t-f map)
         """
-        Amps, Phases, Time_freqs = self.Amplitudes(), self.Phases(), self.Time_frequency()
 
         # For each harmonic
         t_f_container = []
         amplitude_time_container = []
         time_window_container = []
 
-        for i in range(self.num_harmonics):
+        for times, track_freqs, characteristic_strain in self.track_samples(freqs):
 
-            # Extract Amplitude and Time-frequency map for this harmonic
-            Amplitude = Amps[i]
-            t_f_map = Time_freqs[i]
-
-            # Extract the initial frequency for this harmonic
-            f0 = self.f0s[i]
-
-            # Interpolate the function of t->f map
-            t_f_spline = scipy.interpolate.CubicSpline(t_f_map,freqs[(freqs>=f0) & (freqs<=self.f_high[i])])
-            amplitude_time_spline = scipy.interpolate.CubicSpline(t_f_map,2*np.sqrt(t_f_spline(t_f_map))*np.abs(Amplitude))
-
-
-            t_f_container.append(t_f_spline)
-            amplitude_time_container.append(amplitude_time_spline)
-            time_window_container.append((t_f_map[0], t_f_map[-1]))
+            t_f_container.append(scipy.interpolate.CubicSpline(times,track_freqs))
+            amplitude_time_container.append(scipy.interpolate.CubicSpline(times,characteristic_strain))
+            time_window_container.append((times[0], times[-1]))
 
         return(t_f_container,amplitude_time_container,time_window_container)

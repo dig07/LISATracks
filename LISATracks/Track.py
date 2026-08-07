@@ -5,6 +5,7 @@ from manim import config as global_config
 
 from .Sources import TaylorF2Ecc
 from .Sources import PhenomTHM
+from .Sources import DWD
 from functools import partial
 import copy
 from .Confusion import Add_confusion, psd_SCIRD
@@ -141,6 +142,9 @@ class Tracks(Scene):
         #       merging sources like PhenomTHM). Inspiral-only sources (TaylorF2Ecc) stay visible.
         self.source_gated = []
 
+        # Wether to trace the source or not (used for DWDs, which are monochromatic and so don't have a meaningful track to trace)
+        self.source_traced = []
+
         for source in self.sources:
 
             if source[0] == 'TaylorF2Ecc':
@@ -150,6 +154,7 @@ class Tracks(Scene):
                 t_f_spline, amplitude_time_spline, time_windows = smbbh.generate_track_splines(self.freqs)
                 mode_labels = [None]*len(t_f_spline)
                 gated = False
+                traced = True
 
             elif source[0] == 'PhenomTHM':
                 # Initialise source (one track per mode, treated as harmonics)
@@ -158,6 +163,17 @@ class Tracks(Scene):
                 t_f_spline, amplitude_time_spline, time_windows = mbbh.generate_track_splines(self.freqs)
                 mode_labels = [f'({l},{m})' for (l,m) in mbbh.modes]
                 gated = True
+                traced = True
+
+            elif source[0] == 'DWD':
+                # Initialise source (quasi-monochromatic, so the track is parametrised by time)
+                dwd = DWD.DWD(source[2],self.freqs,self.T_obs)
+                # Generate splines
+                t_f_spline, amplitude_time_spline, time_windows = dwd.generate_track_splines(self.freqs)
+                mode_labels = [None]*len(t_f_spline)
+                # Always in band, the source just climbs vertically as it accumulates cycles
+                gated = False
+                traced = False
 
             # Add other sources as else statements
             else:
@@ -172,6 +188,9 @@ class Tracks(Scene):
             self.source_mode_labels.append(mode_labels)
 
             self.source_gated.append(gated)
+
+            self.source_traced.append(traced)
+
     def ASD_with_confusion(self,freqs):
         '''
         Calculate the ASD with confusion noise for the current mission time.
@@ -247,6 +266,9 @@ class Tracks(Scene):
             # Whether to hide this source outside of its valid time-frequency window
             gated = self.source_gated[source_index]
 
+            # Whether to trace this source's track
+            traced = self.source_traced[source_index]
+
             for i in range(num_harmonics):
                 spline_t_f = copy.deepcopy(source_spline_container[0][i])
                 spline_t_A = copy.deepcopy(source_spline_container[1][i])
@@ -272,6 +294,10 @@ class Tracks(Scene):
 
                 tracers.append(tracer)
                 traces.append(trace)
+
+                # If the source is not traced, set the opacity of the trace to 0 so it is not visible
+                if not traced:
+                    trace.set_opacity(0)
 
                 # Add a small mode label (e.g. '(2,2)') above the dot, in the source colour
                 mode_label_text = self.source_mode_labels[source_index][i]
